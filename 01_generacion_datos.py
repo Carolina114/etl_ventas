@@ -14,8 +14,12 @@ from googleapiclient.http import MediaFileUpload
 # ================================
 # 🔐 AUTENTICACIÓN DRIVE
 # ================================
+SCOPES = ['https://www.googleapis.com/auth/drive']
 credenciales = json.loads(os.environ["GOOGLE_CREDENTIALS"])
-creds = service_account.Credentials.from_service_account_info(credenciales)
+creds = service_account.Credentials.from_service_account_info(
+    credenciales,
+    scopes=SCOPES
+)
 service = build('drive', 'v3', credentials=creds)
 
 # ================================
@@ -144,16 +148,34 @@ def subir_o_actualizar(ruta_archivo, carpeta_id):
     nombre_archivo = os.path.basename(ruta_archivo)
 
     query = f"name='{nombre_archivo}' and '{carpeta_id}' in parents and trashed=false"
-    resultados = service.files().list(q=query).execute()
+    
+    resultados = service.files().list(
+        q=query,
+        supportsAllDrives=True,
+        includeItemsFromAllDrives=True
+    ).execute()
+
     archivos = resultados.get('files', [])
 
     media = MediaFileUpload(ruta_archivo, resumable=True)
 
     if archivos:
-        service.files().update(fileId=archivos[0]['id'], media_body=media).execute()
+        service.files().update(
+            fileId=archivos[0]['id'],
+            media_body=media,
+            supportsAllDrives=True
+        ).execute()
     else:
-        file_metadata = {'name': nombre_archivo, 'parents': [carpeta_id]}
-        service.files().create(body=file_metadata, media_body=media).execute()
+        file_metadata = {
+            'name': nombre_archivo,
+            'parents': [carpeta_id]
+        }
+
+        service.files().create(
+            body=file_metadata,
+            media_body=media,
+            supportsAllDrives=True
+        ).execute()
 
 # 🔥 REEMPLAZA CON TU ID REAL
 carpeta_id = "1rs39UfVbxLw32FC3gfP1wW8Gxg5GtpVf"
