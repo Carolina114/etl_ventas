@@ -156,7 +156,7 @@ def subir_o_actualizar(ruta_archivo, carpeta_id):
         service.files().create(body=file_metadata, media_body=media).execute()
 
 # 🔥 REEMPLAZA CON TU ID REAL
-carpeta_id = "TU_ID_AQUI"
+carpeta_id = "1Xwhd-tBtQhoLOHpU73KeJHCr3LeRTs7_"
 
 subir_o_actualizar(ruta + "fact_ventas.csv", carpeta_id)
 subir_o_actualizar(ruta + "fact_envios.csv", carpeta_id)
