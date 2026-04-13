@@ -24,4 +24,4 @@ jobs:
       - name: Ejecutar script
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python script_ventas.py
+        run: python 01_generacion_datos.py
