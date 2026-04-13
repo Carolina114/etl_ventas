@@ -150,7 +150,13 @@ drive_client = GoogleDrive(gauth)
 # Lo encuentras en la URL: drive.google.com/drive/folders/ESTE_ES_EL_ID
 FOLDER_ID = "1T3w-o4CjGnRncs0bl37FDNy-9-1baaYJ"
 
-for archivo in glob.glob("data_ventas/**/*.csv", recursive=True):
+# Solo subimos los archivos de hechos
+archivos_a_subir = [
+    ruta_fact + "fact_ventas.csv",
+    ruta_fact + "fact_envios.csv"
+]
+
+for archivo in archivos_a_subir:
     file_drive = drive_client.CreateFile({
         "title"  : os.path.basename(archivo),
         "parents": [{"id": FOLDER_ID}]
