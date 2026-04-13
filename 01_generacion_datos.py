@@ -130,21 +130,22 @@ print(f"fact_ventas    : {len(pd.read_csv(ruta_fact + 'fact_ventas.csv'))} filas
 print(f"fact_envios    : {len(pd.read_csv(ruta_fact + 'fact_envios.csv'))} filas")
 
 # ── Subida a Google Drive ─────────────────────────────────────────────────────
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 import json
+
 
 # Lee las credenciales desde la variable de entorno (GitHub Secret)
 creds_json = json.loads(os.environ["GOOGLE_CREDENTIALS"])
 with open("credenciales.json", "w") as f:
     json.dump(creds_json, f)
 
-gauth = GoogleAuth()
-gauth.settings["client_config_backend"] = "service"
-gauth.settings["service_config"] = {
-    "client_json_file_path": "credenciales.json",
-    "client_user_email"    : ""
-}
-gauth.ServiceAuth()
-drive_client = GoogleDrive(gauth)
+creds = service_account.Credentials.from_service_account_file(
+    "credenciales.json",
+    scopes=["https://www.googleapis.com/auth/drive"]
+)
+service = build("drive", "v3", credentials=creds)
 
 # ⚠️ Reemplaza con el ID de tu carpeta de Drive
 # Lo encuentras en la URL: drive.google.com/drive/folders/ESTE_ES_EL_ID
@@ -157,10 +158,23 @@ archivos_a_subir = [
 ]
 
 for archivo in archivos_a_subir:
-    file_drive = drive_client.CreateFile({
-        "title"  : os.path.basename(archivo),
-        "parents": [{"id": FOLDER_ID}]
-    })
-    file_drive.SetContentFile(archivo)
-    file_drive.Upload()
-    print(f"✅ Subido: {archivo}")
+    nombre = os.path.basename(archivo)
+
+    # Buscar si ya existe para sobreescribir
+    resultado = service.files().list(
+        q=f"name='{nombre}' and '{FOLDER_ID}' in parents and trashed=false",
+        fields="files(id, name)"
+    ).execute()
+
+    media = MediaFileUpload(archivo, mimetype="text/csv", resumable=True)
+
+    if resultado["files"]:
+        # Actualizar archivo existente
+        file_id = resultado["files"][0]["id"]
+        service.files().update(fileId=file_id, media_body=media).execute()
+        print(f"🔄 Actualizado: {nombre}")
+    else:
+        # Crear archivo nuevo
+        metadata = {"name": nombre, "parents": [FOLDER_ID]}
+        service.files().create(body=metadata, media_body=media).execute()
+        print(f"✅ Subido: {nombre}")
