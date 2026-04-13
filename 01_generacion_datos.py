@@ -103,7 +103,9 @@ ventas = pd.DataFrame({
 })
 
 ventas["total"] = ventas["cantidad"] * ventas["precio_unitario"]
-
+#  GUARDAMOS SOLO LAS NUEVAS
+ventas_nuevas = ventas.copy()
+# CONCAT (histórico + nuevo)
 try:
     existentes = pd.read_csv(ruta + "fact_ventas.csv")
     ventas = pd.concat([existentes, ventas])
@@ -148,7 +150,7 @@ def subir_o_actualizar(ruta_archivo, carpeta_id):
     nombre_archivo = os.path.basename(ruta_archivo)
 
     query = f"name='{nombre_archivo}' and '{carpeta_id}' in parents and trashed=false"
-    
+
     resultados = service.files().list(
         q=query,
         supportsAllDrives=True,
